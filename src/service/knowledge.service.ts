@@ -14,7 +14,7 @@ const createKnowledge = async (Knowledge: Knowledge): Promise<Knowledge> => {
 };
 
 const updateKnowledge = async (Knowledge: Knowledge): Promise<Knowledge> => {
-  const response = await axios.post(
+  const response = await axios.patch(
     `${API_URL}/knowledgeBase/${Knowledge._id}`,
     Knowledge,
   );
