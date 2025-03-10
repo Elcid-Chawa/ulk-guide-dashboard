@@ -12,6 +12,7 @@ interface EditStudentFormProps {
   setNewStudent: React.Dispatch<React.SetStateAction<Student>>;
   handleUpdateStudent: (e: React.FormEvent<HTMLFormElement>) => void;
   setShowEditStudentForm: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function EditStudentForm({
@@ -19,8 +20,8 @@ export default function EditStudentForm({
   setNewStudent,
   setShowEditStudentForm,
   handleUpdateStudent,
+  setOpenModal,
 }: EditStudentFormProps) {
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
       <h3 className="text-lg font-semibold mb-4">Add New Student</h3>
@@ -52,6 +53,24 @@ export default function EditStudentForm({
                 setNewStudent({
                   ...newStudent,
                   rollNumber: e.target.value,
+                })
+              }
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Program
+            </label>
+            <input
+              type="text"
+              required
+              disabled
+              value={newStudent.program}
+              onChange={(e) =>
+                setNewStudent({
+                  ...newStudent,
+                  program: e.target.value,
                 })
               }
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -94,7 +113,11 @@ export default function EditStudentForm({
           <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => setShowEditStudentForm(false)}
+              onClick={() => {
+                setShowEditStudentForm(false);
+                setNewStudent({} as Student);
+                setOpenModal(false);
+              }}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700"
             >
               Cancel
