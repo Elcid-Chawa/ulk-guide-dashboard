@@ -8,19 +8,28 @@ import {
   Trash,
   Lightbulb,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { supabase } from "./lib/supabase";
 import toast from "react-hot-toast";
 import {
   getStudents,
   createStudent,
   updateStudent,
+  deleteStudent,
 } from "./service/student.service";
 import EditStudentForm from "./components/EditStudentForm";
 import CreateStudentForm from "./components/CreateStudentForm";
-import { getknowledgeBase } from "./service/knowledge.service";
+import {
+  getknowledgeBase,
+  createKnowledge,
+  updateKnowledge,
+} from "./service/knowledge.service";
 import KnowledgeBase from "./components/knowledgebase/KnowledgeBase";
 import { Knowledge } from "./utils/type";
+import Modal from "./components/Modal";
+import EditknowledgeForm from "./components/knowledgebase/EditknowledgeForm";
+import CreateKnowledgeForm from "./components/knowledgebase/CreateKnowledgeForm";
+import DeleteModal from "./components/DeleteModal";
 
 type Event = {
   id: string;
@@ -50,6 +59,9 @@ type Students = {
 
 function App() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [editNode, setEditNode] = useState<string>("");
+  const [deleteNode, setDeleteNode] = useState<string>("");
   // const [students, setStudents] = useState<Student[]>([]);
   const [allStudents, setAllStudents] = useState<Students[]>([]);
   const [knowledgeBase, setKnowledgeBase] = useState<Knowledge[]>([]);
@@ -60,6 +72,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("events");
   const [showNewEventForm, setShowNewEventForm] = useState(false);
   const [showNewStudentForm, setShowNewStudentForm] = useState(false);
+  const [showNewKnowledgeForm, setShowNewKnowledgeForm] = useState(false);
   const [showEditStudentForm, setShowEditStudentForm] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -80,7 +93,7 @@ function App() {
     question: "",
     link: "",
     reply: "",
-    key:"",
+    key: "",
   });
 
   useEffect(() => {
@@ -139,10 +152,12 @@ function App() {
     }
   };
 
+  // Students
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      console.log(newStudent);
       const response = await createStudent(newStudent);
       // const { data, error } = await supabase
       //   .from("students")
@@ -192,10 +207,117 @@ function App() {
       });
       console.log(response);
       toast.success("Student updated successfully");
+      setOpenModal(false);
     } catch (error) {
       toast.error("Error adding student");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteStudent = async () => {
+    setLoading(true);
+    try {
+      await deleteStudent(newStudent.rollNumber);
+
+      toast.success("Student deleted successfully");
+      setRefreshing(!refreshing);
+      setDeleteNode("");
+    } catch (error) {
+      toast.error("Error deleting student");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Knowledge Base
+
+  const handleCreateKnowledge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await createKnowledge(newKnowledge);
+      setShowNewKnowledgeForm(false);
+      setRefreshing(!refreshing);
+      setNewKnowledge({
+        _id: "",
+        question: "",
+        link: "",
+        reply: "",
+        key: "",
+      });
+      // console.log(response);
+      toast.success("Knowledge added successfully");
+    } catch (error) {
+      toast.error("Error adding knowledge");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateKnowledge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await updateKnowledge(newKnowledge);
+      // const { data, error } = await supabase
+      //   .from("students")
+      //   .insert([newStudent])
+      //   .select();
+
+      // setStudents([...students, response]);
+      setShowEditknowledgeForm(false);
+      setRefreshing(!refreshing);
+      setNewKnowledge({
+        _id: "",
+        key: "",
+        question: "",
+        reply: "",
+        link: "",
+      });
+      console.log(response);
+      toast.success("Knowledge updated successfully");
+      setOpenModal(false);
+    } catch (error) {
+      toast.error("Error updating knowledge");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // deleteModal
+  const showDeleteModal = (option: string) => {
+    switch (option) {
+      case "student":
+        return (
+          <DeleteModal
+            deleteNode={"student"}
+            itemName={newStudent.name}
+            setOpenModal={setOpenModal}
+            handleDelete={handleDeleteStudent}
+          />
+        );
+
+      case "event":
+        return (
+          <DeleteModal
+            deleteNode={"event"}
+            itemName={"Event"}
+            setOpenModal={setOpenModal}
+            handleDelete={handleDeleteStudent}
+          />
+        );
+      case "knowledge":
+        return (
+          <DeleteModal
+            deleteNode={"knowledge"}
+            itemName={newKnowledge.question}
+            setOpenModal={setOpenModal}
+            handleDelete={handleDeleteStudent}
+          />
+        );
+      default:
+        <div></div>;
     }
   };
 
@@ -418,31 +540,33 @@ function App() {
                       <div className="flex items-center space-x-4">
                         <div
                           onClick={() => {
-                            setShowEditStudentForm(true);
+                            setEditNode("student");
+                            setOpenModal(true);
                             setNewStudent({ ...student });
+                            setDeleteNode("");
                           }}
+                          className="cursor-pointer"
                         >
                           Edit{" "}
                           <span>
-                            <Pen />
+                            <Pen className="text-blue-500" />
                           </span>
                         </div>
-                        <div>
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setNewStudent({ ...student });
+                            setDeleteNode("student");
+                            setOpenModal(true);
+                          }}
+                        >
                           Delete{" "}
                           <span>
-                            <Trash />
+                            <Trash className="text-red-500 font-bold" />
                           </span>
                         </div>
                       </div>
                     </div>
-                    {showEditStudentForm && (
-                      <EditStudentForm
-                        newStudent={student}
-                        setNewStudent={setNewStudent}
-                        setShowEditStudentForm={setShowEditStudentForm}
-                        handleUpdateStudent={handleUpdateStudent}
-                      />
-                    )}
                   </div>
                 ))}
               </div>
@@ -457,7 +581,7 @@ function App() {
                 Knowledge Base
               </h2>
               <button
-                onClick={() => setShowNewStudentForm(true)}
+                onClick={() => setShowNewKnowledgeForm(true)}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center"
               >
                 <Plus className="w-5 h-5 mr-2" />
@@ -465,12 +589,12 @@ function App() {
               </button>
             </div>
 
-            {showNewStudentForm && (
-              <CreateStudentForm
-                newStudent={newStudent}
-                setNewStudent={setNewStudent}
-                showNewStudentForm={setShowNewStudentForm}
-                handleCreateStudent={handleCreateStudent}
+            {showNewKnowledgeForm && (
+              <CreateKnowledgeForm
+                newknowledge={newKnowledge}
+                setNewknowledge={setNewKnowledge}
+                setShowNewKnowledgeForm={setShowNewKnowledgeForm}
+                handleCreateKnowledge={handleCreateKnowledge}
               />
             )}
 
@@ -479,10 +603,48 @@ function App() {
               showEditknowledgeForm={showEditknowledgeForm}
               setShowEditknowledgeForm={setShowEditknowledgeForm}
               setNewKnowledge={setNewKnowledge}
+              setOpenModal={setOpenModal}
+              setEditNode={setEditNode}
+              setDeleteNode={setDeleteNode}
+              
             />
           </div>
         )}
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={openModal}
+        onClose={() => {
+          setOpenModal(false);
+          setEditNode("");
+          setDeleteNode("");
+        }}
+      >
+        {editNode === "student" ? (
+          <EditStudentForm
+            newStudent={newStudent}
+            setNewStudent={setNewStudent}
+            setShowEditStudentForm={setShowEditStudentForm}
+            handleUpdateStudent={handleUpdateStudent}
+            setOpenModal={setOpenModal}
+          />
+        ) : editNode === "knowledge" ? (
+          <EditknowledgeForm
+            newknowledge={newKnowledge}
+            setNewknowledge={setNewKnowledge}
+            setShowEditknowledgeForm={setShowEditknowledgeForm}
+            setOpenModal={setOpenModal}
+            handleUpdateKnowledge={handleUpdateKnowledge}
+          />
+        ) : editNode === "event" ? (
+          <div>Event</div>
+        ) : (
+          <div></div>
+        )}
+
+        {showDeleteModal(deleteNode)}
+      </Modal>
     </div>
   );
 }
